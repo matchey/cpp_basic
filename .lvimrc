@@ -1,0 +1,14 @@
+
+"set runtimepath=/home/amsl/.vim/
+
+"set makeprg = make
+"nnoremap <Space>m :cd %:p:h:h<CR>:make<Enter>
+"nnoremap <Space>r :!python %<CR>
+"nnoremap <Space>r :PyRun<CR><C-w>Hzz
+ nnoremap <Space>m :CppMake<CR><C-w>Hzz
+ nnoremap <Space>r :CppRun<CR><C-w>Hzz
+ nnoremap <C-Right> <C-w>>
+ nnoremap <C-Left> <C-w><
+ nnoremap <silent>q<Up> <C-w><Up>u:q<Enter>
+ nnoremap <silent>q<Right> <C-w><Right>u:q<Enter>
+
