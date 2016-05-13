@@ -1,5 +1,6 @@
 //数字を入力して貰いその数字の月が何日まであるかを出力するプログラム
 #include<iostream>
+#include<cstdlib>
 using namespace std;
 
 class MonthDays/*{{{*/
@@ -11,10 +12,11 @@ class MonthDays/*{{{*/
 	MonthDays();
 	void input();
 	int judge();
+	int judge2();
 	void show() const;
 };
 
-MonthDays::MonthDays()
+MonthDays::MonthDays()/*{{{*/
 {
 	string tmp[12]={"January","February","March","April",
 		"May","June","July","August","September",
@@ -22,10 +24,9 @@ MonthDays::MonthDays()
 	for(int i=0;i<12;i++){
 		name[i]=tmp[i];
 	}
-}
+}/*}}}*/
 
-
-void MonthDays::input()
+void MonthDays::input()/*{{{*/
 {
 	while(1){
 		cout<<"Type a number(1~12):";
@@ -36,9 +37,9 @@ void MonthDays::input()
 			cout<<"number must be in 1~12"<<endl;
 		}
 	}
-}
+}/*}}}*/
 
-int MonthDays::judge()
+int MonthDays::judge()/*{{{*/
 {
 	if(month == 4 || month == 6 || month == 9 || month == 11)
 		days = 30;
@@ -55,12 +56,17 @@ int MonthDays::judge()
 	}
 	else  
 		days = 31;  
-}
+}/*}}}*/
 
-void MonthDays::show() const
+int MonthDays::judge2()/*{{{*/
+{
+	days=((month!=2) ? 31-abs((int(month-7.5))%2):28);
+}/*}}}*/
+
+void MonthDays::show() const/*{{{*/
 {
 	cout<<name[month-1]<<" has "<<days<<" days."<<endl;
-}
+}/*}}}*/
 /*}}}*/
 
 void execute()
@@ -76,3 +82,4 @@ int main()
 	execute();
 	return 0;
 }
+
