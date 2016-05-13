@@ -1,5 +1,6 @@
 //数字を入力して貰いその数字の月が何日まであるかを出力するプログラム
 #include<iostream>
+#include<string>
 #include<cstdlib>
 using namespace std;
 
@@ -28,13 +29,20 @@ MonthDays::MonthDays()/*{{{*/
 
 void MonthDays::input()/*{{{*/
 {
+	cout<<"Type a number(1~12):";
 	while(1){
-		cout<<"Type a number(1~12):";
-		cin>>month;
+		for(cin>>month;!cin;cin>>month){
+			cin.clear();
+			cin.ignore();
+			// cout<<"made a mistake"<<endl;
+			// cout<<"Type a number(1~12):";
+		}
 		if(!(month<1||month>12)){
 			break;
 		}else{
 			cout<<"number must be in 1~12"<<endl;
+			cout<<"Type a number(1~12):";
+			month=0;
 		}
 	}
 }/*}}}*/
