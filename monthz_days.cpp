@@ -69,6 +69,7 @@ int MonthDays::judge()/*{{{*/
 int MonthDays::judge2()/*{{{*/
 {
 	days=((month!=2) ? 31-abs((int(month-7.5))%2):28);
+
 }/*}}}*/
 
 void MonthDays::show() const/*{{{*/
@@ -90,4 +91,3 @@ int main()
 	execute();
 	return 0;
 }
-
