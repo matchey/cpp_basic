@@ -15,14 +15,16 @@ using namespace std;
 class Player
 {
 	string name;//player name
-	int points;//player's total points
+	int points;//player's latest score
 	int team;//player's team
 	float income_expenditure;//income and expenditure
+	float average; //player's score average
 	public:
 	Player(){ points = 0; };
 	string get_name(){return name;};
 	int get_points(){return points;};
 	int get_team(){return team;};
+	float get_ave(){return average;};
 	void set_name(string x){ name = x; };
 	void set_team(int x){ team = x;};
 	void set_team_manual();
@@ -31,6 +33,8 @@ class Player
 	int input_point();
 	void show_score() const;
 	void show_income_expenditure() const;
+	void show_ave() const;
+	float calc_ave(int);
 };
 
 void Player::set_team_manual()/*{{{*/
@@ -79,6 +83,18 @@ void Player::show_income_expenditure() const/*{{{*/
 {
 	cout<<name<<": ";
 	printf("%5d yen\n",int(income_expenditure));
+}/*}}}*/
+
+void Player::show_ave() const/*{{{*/
+{
+	cout<<name<<"'s average: ";
+	printf("%4.1f\n", average);
+}/*}}}*/
+
+float Player::calc_ave(int count)/*{{{*/
+{
+	average = ((count -1.0 ) * average + points) / count;
+	return average;
 }/*}}}*/
 
 int set_player_num()/*{{{*/
@@ -149,19 +165,21 @@ template<class KEY, class VALUE> void my_sort(KEY key[], int size, VALUE value[]
 
 void set_team_auto(int num, Player *player)/*{{{*/
 {
-	int team_num=2;//number of teams
-	cout<<"Type a number of teams: ";
-	while(1){
-		for(cin>>team_num;!cin;cin>>team_num){
-			cin.clear();
-			cin.ignore();
-		}
-		if(!(team_num<0||team_num>num)){
-			break;
-		}else{
-			cout<<"team number must be in 0~"<<num<<endl;
-			cout<<"Type number(0~"<<num<<"):";
-			team_num=2;
+	int team_num=1;//number of teams
+	if(num > 1){
+		cout<<"Type a number of teams: ";
+		while(1){
+			for(cin>>team_num;!cin;cin>>team_num){
+				cin.clear();
+				cin.ignore();
+			}
+			if(!(team_num<0||team_num>num)){
+				break;
+			}else{
+				cout<<"team number must be in 0~"<<num<<endl;
+				cout<<"Type number(0~"<<num<<"):";
+				team_num=2;
+			}
 		}
 	}
 	int team = 1;
@@ -186,19 +204,21 @@ void set_team_auto(int num, Player *player)/*{{{*/
 void set_team_select(int num, Player *player)/*{{{*/
 {
 	int select_mode = 1;
-	cout<<"team set  AUTO:1   or   MANUAL:2 "<<endl;
-	cout<<"select: ";
-	while(1){
-		for(cin>>select_mode;!cin;cin>>select_mode){
-			cin.clear();
-			cin.ignore();
-		}
-		if(!(select_mode<1||select_mode>2)){
-			break;
-		}else{
-			cout<<"select 1 or 2"<<endl;
-			cout<<"Type mode(1~2):";
-			select_mode=1;
+	if(num > 1){
+		cout<<"team set  AUTO:1   or   MANUAL:2 "<<endl;
+		cout<<"select: ";
+		while(1){
+			for(cin>>select_mode;!cin;cin>>select_mode){
+				cin.clear();
+				cin.ignore();
+			}
+			if(!(select_mode<1||select_mode>2)){
+				break;
+			}else{
+				cout<<"select 1 or 2"<<endl;
+				cout<<"Type mode(1~2):";
+				select_mode=1;
+			}
 		}
 	}
 	switch(select_mode){
@@ -227,7 +247,27 @@ int set_rate(int base_rate)/*{{{*/
 		flag = true;
 	}
 	if(flag){
-		rate *= rand()%3+1;
+		rate *= rand()%2+1;
+	}
+	return rate;
+}/*}}}*/
+
+int change_rate()/*{{{*/
+{
+	int rate = 1;
+	cout<<"input rate: ";
+	while(1){
+		for(cin>>rate;!cin;cin>>rate){
+			cin.clear();
+			cin.ignore();
+		}
+		if(!(rate<1||rate>100)){
+			break;
+		}else{
+			cout<<"rate must be in 1~100"<<endl;
+			cout<<"Type number of rate(1~100):";
+			rate=1;
+		}
 	}
 	return rate;
 }/*}}}*/
@@ -244,13 +284,16 @@ class Inout/*{{{*/
 {
 	int num; //number of players
 	int player_points[8]; //for one game
+	int handicap[8]; //for one game
 	Player *player;
 	map <int, pair<int, int> > team_points; //<"team name", "team score, number of members">
 	public:
 	Inout(int, Player*);
-	bool check(Player*);
-	void team_calc();
+	bool check(int);
+	void set_handi(int);
+	void team_calc(int);
 	void player_calc(int);
+	void calc_handi();
 };
 Inout::Inout(int num_p, Player *p)/*{{{*/
 {
@@ -315,28 +358,51 @@ vector<int> sort_by_sn(map <int, pair<int, int> > team_points, vector<int> &team
 	return t_name;
 }/*}}}*/
 
-bool Inout::check(Player *player)/*{{{*/
+void Inout::set_handi(int count)/*{{{*/
+{
+	for(int i=0; i<num; i++){ //remove latest score
+		player[i].add_point(-player_points[i]);
+		team_points[ player[i].get_team() ].first -= player_points[i];
+		team_points[ player[i].get_team() ].second -= 1;
+	}
+	calc_handi();
+	for(int i=0; i<num; i++){
+		player_points[i] += handicap[i];
+		player[i].add_point(player_points[i]);
+		player[i].calc_ave(count);
+		team_points[ player[i].get_team() ].first += player_points[i];
+		team_points[ player[i].get_team() ].second += 1;
+	}
+	for(int i=0;i<num;i++){
+		cout<<player[i].get_name()<<":("<<handicap[i]<<")"<<player[i].get_points()<<endl;
+	}
+}/*}}}*/
+
+bool Inout::check(int count)/*{{{*/
 {
 	char n[2];
 	bool rtn = true;
-	cout<<"OK? [Y/n] ";
+	cout<<"OK? (set handicap:[s])  [Y/n] ";
 	while(getchar() != '\n') ;
 	scanf("%[^\n]",n);
 	if(*n=='n'){
 		rtn = false;
-		for(int i=0; i<num; i++){ //set score to each team
+		for(int i=0; i<num; i++){ //remove latest score
 			player[i].add_point(-player_points[i]);
 			team_points[ player[i].get_team() ].first -= player_points[i];
 			player_points[i] = 0;
 			team_points[ player[i].get_team() ].second -= 1;
 		}
+	}else if(*n=='s'){
+		set_handi(count);
+		rtn = true;
 	}else{
 		rtn = true;
 	}
 	return rtn;
 }/*}}}*/
 
-void Inout::team_calc()/*{{{*/
+void Inout::team_calc(int count)/*{{{*/
 {
 	int sum = 0; //sum points every team
 	vector<int> team_name; //soted for num of mem;
@@ -348,10 +414,11 @@ void Inout::team_calc()/*{{{*/
 	while(!flag){
 		for(int i=0; i<num; i++){ //set score to each team
 			player_points[i] = player[i].input_point();
+			player[i].calc_ave(count);
 			team_points[ player[i].get_team() ].first += player_points[i];
 			team_points[ player[i].get_team() ].second += 1;
 		}
-		flag = check(player);
+		flag = check(count);
 	}
 	for(it=team_points.begin(); it!=team_points.end(); it++){team_name.push_back(it->first);} //set team name
 	sort_by_sn(team_points, team_name, 1); //score:0, num of men:1
@@ -407,30 +474,65 @@ void Inout::player_calc(int rate)/*{{{*/
 	// 	player[i].show_income_expenditure();
 	// }
 }/*}}}*/
+
+void Inout::calc_handi()/*{{{*/
+{
+	float ave = 0;
+	float max = player[0].get_ave();
+	for(int i=1;i<num;i++){
+		ave = player[i].get_ave();
+		if(max < ave){
+			max = ave;
+		}
+	}
+	max = (int)max - (int)max%10;
+	for(int i=0; i<num; i++){
+		ave = player[i].get_ave();
+		ave += (10.0/3.0) * 3;
+		ave = (int)ave - (int)ave %10;
+		handicap[i] = max - ave;
+		handicap[i] = handicap[i]<0 ? 0 : handicap[i];
+	}
+}/*}}}*/
 /*}}}*/
 
-bool select_cntn()/*{{{*/
+bool select_cntn(int *rate)/*{{{*/
 {
 	char n[2];
 	bool rtn = true;
-	cout<<"Continue? [Y/n] ";
+	cout<<"Continue? (change rate:[c]) [Y/n]";
 	while(getchar() != '\n') ;
 	scanf("%[^\n]",n);
 	if(*n=='n'){
 		rtn = false;
+	}else if(*n=='c'){
+		*rate = change_rate();
+		rtn = true;
 	}else{
 		rtn = true;
 	}
+	*n = '\n';
 	return rtn;
 }/*}}}*/
 
-void execute(int num, Player *player, int rate)/*{{{*/
+void show_result(int num, const Player* player)/*{{{*/
+{
+	for(int i=0;i<num;i++){//show last average
+		player[i].show_ave();
+	}
+	cout<<endl;
+	for(int i=0;i<num;i++){//show latest income and expenditure
+		player[i].show_income_expenditure();
+	}
+}/*}}}*/
+
+void execute(int num, Player *player, int rate, int count)/*{{{*/
 {
 	set_team_select(num, player);
 	rate = set_rate(rate);
 	cout<<"===== x"<<rate<<" ===="<<endl;
 	Inout in_out(num, player);
-	in_out.team_calc();
+	in_out.team_calc(count);
 	in_out.player_calc(rate);
 }/*}}}*/
 
@@ -438,17 +540,17 @@ void spin()
 {
 	int num = set_player_num();
 	int rate = 10;
+	int count = 1;
 	bool flag = true;
 	Player *player;
 	player = new Player[num];
 	set_each_name(num, player);
 	while(flag){
-		execute(num, player, rate);
-		flag = select_cntn();
+		execute(num, player, rate, count);
+		flag = select_cntn(&rate);
+		count++;
 	}
-	for(int i=0;i<num;i++){//last result show
-		player[i].show_income_expenditure();
-	}
+	show_result(num, player);
 	delete [] player;
 }
 
