@@ -373,9 +373,6 @@ void Inout::set_handi(int count)/*{{{*/
 		team_points[ player[i].get_team() ].first += player_points[i];
 		team_points[ player[i].get_team() ].second += 1;
 	}
-	for(int i=0;i<num;i++){
-		cout<<player[i].get_name()<<":("<<handicap[i]<<")"<<player[i].get_points()<<endl;
-	}
 }/*}}}*/
 
 bool Inout::check(int count)/*{{{*/
