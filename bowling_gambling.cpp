@@ -522,7 +522,7 @@ void show_result(int num, Player* player, int count)/*{{{*/
 {
 	float ave = 0.0;
 	for(int i=0;i<num;i++){//show last average
-		player[i].show_ave();
+		// player[i].show_ave();
 		ave = player[i].get_sum() / (count - 1.0);
 		cout<<player[i].get_name()<<"'s average: ";
 		printf("%4.1f\n", ave);
