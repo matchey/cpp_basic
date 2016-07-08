@@ -18,18 +18,21 @@ class Player
 	int points;//player's latest score
 	int team;//player's team
 	float income_expenditure;//income and expenditure
-	float average; //player's score average
+	float average; //player's score average(include handicap)
+	int sum; //player's score sum
 	public:
-	Player(){ points = 0; };
+	Player(){ points = 0; sum = 0; };
 	string get_name(){return name;};
 	int get_points(){return points;};
 	int get_team(){return team;};
 	float get_ave(){return average;};
+	int get_sum(){return sum;};
 	void set_name(string x){ name = x; };
 	void set_team(int x){ team = x;};
 	void set_team_manual();
 	void add_income_expenditure(int x){ income_expenditure += x; };
 	void add_point(int x){ points += x; };
+	void add_sum(int x){ sum += x; };
 	int input_point();
 	void show_score() const;
 	void show_income_expenditure() const;
@@ -45,11 +48,11 @@ void Player::set_team_manual()/*{{{*/
 			cin.clear();
 			cin.ignore();
 		}
-		if(!(team<0||team>8)){
+		if(!(team<0||team>20)){
 			break;
 		}else{
-			cout<<"team number must be in 0~8"<<endl;
-			cout<<"Type team number(0~8):";
+			cout<<"team number must be in 0~20"<<endl;
+			cout<<"Type team number(0~20):";
 			team=0;
 		}
 	}
@@ -106,11 +109,11 @@ int set_player_num()/*{{{*/
 			cin.clear();
 			cin.ignore();
 		}
-		if(!(num<1||num>8)){
+		if(!(num<1||num>20)){
 			break;
 		}else{
-			cout<<"number of players must be in 1~8"<<endl;
-			cout<<"Type number of players(1~8):";
+			cout<<"number of players must be in 1~20"<<endl;
+			cout<<"Type number of players(1~20):";
 			num=1;
 		}
 	}
@@ -283,8 +286,8 @@ bool sort_greater(const ass_arr& left,const ass_arr& right){
 class Inout/*{{{*/
 {
 	int num; //number of players
-	int player_points[8]; //for one game
-	int handicap[8]; //for one game
+	int player_points[20]; //for one game
+	int handicap[20]; //for one game
 	Player *player;
 	map <int, pair<int, int> > team_points; //<"team name", "team score, number of members">
 	public:
@@ -369,7 +372,6 @@ void Inout::set_handi(int count)/*{{{*/
 	for(int i=0; i<num; i++){
 		player_points[i] += handicap[i];
 		player[i].add_point(player_points[i]);
-		player[i].calc_ave(count);
 		team_points[ player[i].get_team() ].first += player_points[i];
 		team_points[ player[i].get_team() ].second += 1;
 	}
@@ -386,6 +388,7 @@ bool Inout::check(int count)/*{{{*/
 		rtn = false;
 		for(int i=0; i<num; i++){ //remove latest score
 			player[i].add_point(-player_points[i]);
+			player[i].add_sum(-player_points[i]);
 			team_points[ player[i].get_team() ].first -= player_points[i];
 			player_points[i] = 0;
 			team_points[ player[i].get_team() ].second -= 1;
@@ -411,11 +414,14 @@ void Inout::team_calc(int count)/*{{{*/
 	while(!flag){
 		for(int i=0; i<num; i++){ //set score to each team
 			player_points[i] = player[i].input_point();
-			player[i].calc_ave(count);
+			player[i].add_sum(player_points[i]);
 			team_points[ player[i].get_team() ].first += player_points[i];
 			team_points[ player[i].get_team() ].second += 1;
 		}
 		flag = check(count);
+	}
+	for(int i=0; i<num; i++){ //set score to each team
+		player[i].calc_ave(count);
 	}
 	for(it=team_points.begin(); it!=team_points.end(); it++){team_name.push_back(it->first);} //set team name
 	sort_by_sn(team_points, team_name, 1); //score:0, num of men:1
@@ -512,10 +518,14 @@ bool select_cntn(int *rate)/*{{{*/
 	return rtn;
 }/*}}}*/
 
-void show_result(int num, const Player* player)/*{{{*/
+void show_result(int num, Player* player, int count)/*{{{*/
 {
+	float ave = 0.0;
 	for(int i=0;i<num;i++){//show last average
 		player[i].show_ave();
+		ave = player[i].get_sum() / (count - 1.0);
+		cout<<player[i].get_name()<<"'s average: ";
+		printf("%4.1f\n", ave);
 	}
 	cout<<endl;
 	for(int i=0;i<num;i++){//show latest income and expenditure
@@ -547,7 +557,7 @@ void spin()
 		flag = select_cntn(&rate);
 		count++;
 	}
-	show_result(num, player);
+	show_result(num, player, count);
 	delete [] player;
 }
 
