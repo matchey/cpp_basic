@@ -123,7 +123,7 @@ int set_player_num()/*{{{*/
 void set_each_name(int num, Player *player)/*{{{*/
 {
 	string tmp;
-	for(int i;i<num;i++){
+	for(int i=0;i<num;i++){
 		cout<<"type player"<<i+1<<"'s name: ";
 		cin>>tmp;
 		player[i].set_name(tmp);
@@ -186,7 +186,6 @@ void set_team_auto(int num, Player *player)/*{{{*/
 		}
 	}
 	int team = 1;
-	int each_num = num / team_num;
 	for(int i=0;i<team_num;i++){
 		printf("team%d:         ",i+1);
 	}
@@ -408,8 +407,6 @@ void Inout::team_calc(int count)/*{{{*/
 	vector<int> team_name; //soted for num of mem;
 	map<int, pair<int, int> >::iterator it;
 	map<int, pair<int, int> >::iterator ite;
-	int tmp; //sort swap tempolary
-	int m = 0; int n = 0;//for loop counter
 	bool flag = false;
 	while(!flag){
 		for(int i=0; i<num; i++){ //set score to each team
