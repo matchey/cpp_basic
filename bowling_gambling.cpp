@@ -490,7 +490,7 @@ void Inout::calc_handi()/*{{{*/
 		ave = player[i].get_ave();
 		ave += (10.0/3.0) * 3;
 		ave = (int)ave - (int)ave %10;
-		handicap[i] = max - ave;
+		handicap[i] = int(max) - int(ave);
 		handicap[i] = handicap[i]<0 ? 0 : handicap[i];
 	}
 }/*}}}*/
