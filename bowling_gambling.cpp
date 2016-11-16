@@ -423,9 +423,11 @@ void Inout::team_calc(int count)/*{{{*/
 	for(it=team_points.begin(); it!=team_points.end(); it++){team_name.push_back(it->first);} //set team name
 	sort_by_sn(team_points, team_name, 1); //score:0, num of men:1
 	int num_teams = (int)team_name.size(); //number of teams
+	int num_team_max = team_points[team_name[0]].second;
 	float ratio = 1.0; //ratio of members
 	for(int i=0; i<num_teams-1; i++){
-		ratio = 1.0*team_points[team_name[i]].second / team_points[team_name[i+1]].second;
+		ratio = 1.0*num_team_max / team_points[team_name[i+1]].second;
+		// ratio = 1.0*team_points[team_name[i]].second / team_points[team_name[i+1]].second;
 		team_points[team_name[i+1]].first = int(ratio*team_points[team_name[i+1]].first +0.5);
 		sum += team_points[team_name[i]].first;
 	}
