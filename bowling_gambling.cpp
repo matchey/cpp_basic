@@ -1,16 +1,21 @@
-//bowling scoreから賭けのプラスマイナスを表示するプログラム
+//show income and expenditure from bowling score
 #include<iostream>
 #include<string>
 #include<cstdlib>
 #include<map>
 #include<vector>
 #include<algorithm>
+#include<fstream>
+#include<sstream>
+#include<time.h>
 
 #include<stdio.h>
 #include<time.h>
 #include<stdlib.h>
 
 using namespace std;
+
+ofstream wfile;
 
 class Player
 {
@@ -21,7 +26,7 @@ class Player
 	float average; //player's score average(include handicap)
 	int sum; //player's score sum
 	public:
-	Player(){ points = 0; sum = 0; };
+	Player(){ points = 0; sum = 0; income_expenditure=0; average=0;};
 	string get_name(){return name;};
 	int get_points(){return points;};
 	int get_team(){return team;};
@@ -85,7 +90,7 @@ void Player::show_score() const/*{{{*/
 void Player::show_income_expenditure() const/*{{{*/
 {
 	cout<<name<<": ";
-	printf("%5d yen\n",int(income_expenditure));
+	printf("%5d yen\n", (int)income_expenditure);
 }/*}}}*/
 
 void Player::show_ave() const/*{{{*/
@@ -98,6 +103,48 @@ float Player::calc_ave(int count)/*{{{*/
 {
 	average = ((count -1.0 ) * average + points) / count;
 	return average;
+}/*}}}*/
+
+bool check_mkdir()/*{{{*/
+{
+	char n[2];
+	bool rtn = true;
+	cout<<"./record/ directory exist?  [Y/n]";
+	scanf("%[^\n]",n);
+	if(*n=='n'){
+		cout<<"try again after type terminal command \"mkdir record\""<<endl;
+		rtn = false;
+	}else{
+		rtn = true;
+		time_t now = time(NULL);
+		struct tm *pnow = localtime(&now);
+		int year = pnow->tm_year+1900;
+		int month = pnow->tm_mon + 1;
+		int day = pnow->tm_mday;
+		int hour = pnow->tm_hour;
+		int min = pnow->tm_min;
+		
+		ostringstream oss;
+		
+		oss<<"./record/";
+		oss.setf(ios::right); oss.fill('0'); oss.width(2);
+		oss<<year;
+		oss.setf(ios::right); oss.fill('0'); oss.width(2);
+		oss<<month;
+		oss.setf(ios::right); oss.fill('0'); oss.width(2);
+		oss<<day<<"_";
+		oss.setf(ios::right); oss.fill('0'); oss.width(2);
+		oss<<hour;
+		oss.setf(ios::right); oss.fill('0'); oss.width(2);
+		oss<<min<<".csv";
+		
+		string fname = oss.str();
+		
+		// cout<<fname<<endl;
+		wfile.open(fname.c_str());
+	}
+	*n = '\n';
+	return rtn;
 }/*}}}*/
 
 int set_player_num()/*{{{*/
@@ -123,7 +170,7 @@ int set_player_num()/*{{{*/
 void set_each_name(int num, Player *player)/*{{{*/
 {
 	string tmp;
-	for(int i=0;i<num;i++){
+	for(int i;i<num;i++){
 		cout<<"type player"<<i+1<<"'s name: ";
 		cin>>tmp;
 		player[i].set_name(tmp);
@@ -186,6 +233,7 @@ void set_team_auto(int num, Player *player)/*{{{*/
 		}
 	}
 	int team = 1;
+	int each_num = num / team_num;
 	for(int i=0;i<team_num;i++){
 		printf("team%d:         ",i+1);
 	}
@@ -407,6 +455,8 @@ void Inout::team_calc(int count)/*{{{*/
 	vector<int> team_name; //soted for num of mem;
 	map<int, pair<int, int> >::iterator it;
 	map<int, pair<int, int> >::iterator ite;
+	int tmp; //sort swap tempolary
+	int m = 0; int n = 0;//for loop counter
 	bool flag = false;
 	while(!flag){
 		for(int i=0; i<num; i++){ //set score to each team
@@ -449,7 +499,7 @@ void Inout::player_calc(int rate)/*{{{*/
 {
 	int sign = 1;
 	int score_abs = 0;
-	int player_inout[] = {0,0,0,0,0,0,0,0}; //each player's income and expenditure
+	int player_inout[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //each player's income and expenditure
 	map<int, pair<int, int> >::iterator it;
 	int n = 0; //use in for loop
 
@@ -475,6 +525,10 @@ void Inout::player_calc(int rate)/*{{{*/
 	// for(int i=0;i<num;i++){//last result show
 	// 	player[i].show_income_expenditure();
 	// }
+	for(int i=0;i<num;i++){//last result show
+		wfile<<player[i].get_name()<<","<<player_inout[i]*rate<<",,";
+	}
+	wfile<<endl;
 }/*}}}*/
 
 void Inout::calc_handi()/*{{{*/
@@ -492,7 +546,7 @@ void Inout::calc_handi()/*{{{*/
 		ave = player[i].get_ave();
 		ave += (10.0/3.0) * 3;
 		ave = (int)ave - (int)ave %10;
-		handicap[i] = int(max) - int(ave);
+		handicap[i] = max - ave;
 		handicap[i] = handicap[i]<0 ? 0 : handicap[i];
 	}
 }/*}}}*/
@@ -544,20 +598,23 @@ void execute(int num, Player *player, int rate, int count)/*{{{*/
 
 void spin()
 {
-	int num = set_player_num();
-	int rate = 10;
-	int count = 1;
-	bool flag = true;
-	Player *player;
-	player = new Player[num];
-	set_each_name(num, player);
-	while(flag){
-		execute(num, player, rate, count);
-		flag = select_cntn(&rate);
-		count++;
+	bool start = check_mkdir();
+	if(start){
+		int num = set_player_num();
+		int rate = 10;
+		int count = 1;
+		bool flag = true;
+		Player *player;
+		player = new Player[num];
+		set_each_name(num, player);
+		while(flag){
+			execute(num, player, rate, count);
+			flag = select_cntn(&rate);
+			count++;
+		}
+		show_result(num, player, count);
+		delete [] player;
 	}
-	show_result(num, player, count);
-	delete [] player;
 }
 
 int main()
